@@ -24,5 +24,5 @@ This project covers advanced topics in MySQL, including creating tables with con
 
 - All files will be executed on Ubuntu 18.04 LTS using MySQL 5.7 (version 5.7.30).
 - SQL queries should be preceded by comments describing the task.
-- All SQL keywords should be in uppercase (e.g., SELECT, WHERE).
+- All SQL keywords should be in uppercase (e.g., `SELECT`, `WHERE`).
 - File lengths will be tested using `wc`.
