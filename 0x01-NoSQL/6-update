@@ -1,5 +1,6 @@
 // Adds a new attribute to all documents in the collection
-db.school.updateMany(
+db.school.update(
     {name: "Holberton school"},
     {$set: {address: "972 Mission street"}}
+    {multi: true}
 );
