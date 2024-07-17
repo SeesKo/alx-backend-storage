@@ -57,6 +57,23 @@ class Cache:
         """
         return self.get(key, fn=int)
 
+    @staticmethod
+    def replay(method: Callable) -> None:
+        """
+        Display the history of calls for a particular method.
+        """
+        inputs_key = "{}:inputs".format(method.__qualname__)
+        outputs_key = "{}:outputs".format(method.__qualname__)
+
+        redis_instance = redis.Redis()
+        inputs = redis_instance.lrange(inputs_key, 0, -1)
+        outputs = redis_instance.lrange(outputs_key, 0, -1)
+
+        print(f"{method.__qualname__} was called {len(inputs)} times:")
+        for i in range(len(inputs)):
+            print(f"{method.__qualname__}{inputs[i].decode('utf-8')} -> "
+                  f"{outputs[i].decode('utf-8')}")
+
 
 def count_calls(method: Callable) -> Callable:
     """
@@ -94,5 +111,6 @@ def call_history(method: Callable) -> Callable:
     return wrapper
 
 
-Cache.store = count_calls(Cache.store)
+# Apply decorators to the Cache.store method
 Cache.store = call_history(Cache.store)
+Cache.store = count_calls(Cache.store)
