@@ -6,7 +6,7 @@ Redis and store data with random keys.
 
 import redis
 import uuid
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional, Union
 import functools
 
 
@@ -63,12 +63,31 @@ def count_calls(method: Callable) -> Callable:
     Decorator to count the number of times a method is called.
     """
     @functools.wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
+    def wrapper(self, *args, **kwargs):
         key = method.__qualname__
         if isinstance(self._redis, redis.Redis):
             self._redis.incr(key)
         return method(self, *args, **kwargs)
     return wrapper
+
+
+def call_history(method: Callable) -> Callable:
+    """Decorator to store history of inputs and outputs of a method."""
+    def wrapped(self, *args, **kwargs):
+        inputs_key = "{}:inputs".format(method.__qualname__)
+        outputs_key = "{}:outputs".format(method.__qualname__)
+
+        # Store inputs
+        self._redis.rpush(inputs_key, str(args))
+
+        # Execute the original method
+        result = method(self, *args, **kwargs)
+
+        # Store output
+        self._redis.rpush(outputs_key, result)
+
+        return result
+    return wrapped
 
 
 # Apply the decorator to the store method of Cache class
