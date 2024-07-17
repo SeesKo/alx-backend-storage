@@ -7,6 +7,7 @@ Redis and store data with random keys.
 import redis
 import uuid
 from typing import Union, Callable, Optional
+from functools import wraps
 
 
 class Cache:
@@ -22,9 +23,7 @@ class Cache:
         self._redis.flushdb()
 
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        """
-        Store the data in Redis with a random key.
-        """
+        """Store the data in Redis with a random key."""
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
@@ -44,14 +43,18 @@ class Cache:
             return fn(data)
         return data
 
-    def get_str(self, key: str) -> Optional[str]:
-        """
-        Retrieve the data as a UTF-8 string.
-        """
-        return self.get(key, fn=lambda d: d.decode("utf-8"))
+    def count_calls(method: Callable) -> Callable:
+        """Decorator to count how many times a method is called."""
+        @wraps(method)
+        def wrapped(self, *args, **kwargs):
+            key = method.__qualname__
+            self._redis.incr(key)
+            return method(self, *args, **kwargs)
+        return wrapped
 
-    def get_int(self, key: str) -> Optional[int]:
-        """
-        Retrieve the data as an integer.
-        """
-        return self.get(key, fn=int)
+    @count_calls
+    def store(self, data: Union[str, bytes, int, float]) -> str:
+        """Store the data in Redis with a random key."""
+        key = str(uuid.uuid4())
+        self._redis.set(key, data)
+        return key
