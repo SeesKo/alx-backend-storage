@@ -64,9 +64,9 @@ def count_calls(method: Callable) -> Callable:
     """
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
-        "Increments a counter in Redis and calls the decorated method."
         key = method.__qualname__
-        self._redis.incr(key)
+        if isinstance(self._redis, redis.Redis):
+            self._redis.incr(key)
         return method(self, *args, **kwargs)
     return wrapper
 
