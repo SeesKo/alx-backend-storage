@@ -6,7 +6,7 @@ Redis and store data with random keys.
 
 import redis
 import uuid
-from typing import Union, Callable, Optional
+from typing import Any, Callable, Optional, Union
 import functools
 
 
@@ -63,7 +63,7 @@ def count_calls(method: Callable) -> Callable:
     Decorator to count the number of times a method is called.
     """
     @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, *args, **kwargs) -> Any:
         key = method.__qualname__
         if isinstance(self._redis, redis.Redis):
             self._redis.incr(key)
