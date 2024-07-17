@@ -6,7 +6,7 @@ Redis and store data with random keys.
 
 import redis
 import uuid
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional, Union
 import functools
 
 
@@ -72,22 +72,23 @@ def count_calls(method: Callable) -> Callable:
 
 
 def call_history(method: Callable) -> Callable:
-    '''Tracks the call details of a method in a Cache class.
-    '''
-    @wraps(method)
-    def invoker(self, *args, **kwargs) -> Any:
-        '''Returns the method's output after storing its inputs and output.
-        '''
-        in_key = '{}:inputs'.format(method.__qualname__)
-        out_key = '{}:outputs'.format(method.__qualname__)
-        if isinstance(self._redis, redis.Redis):
-            self._redis.rpush(in_key, str(args))
-        output = method(self, *args, **kwargs)
-        if isinstance(self._redis, redis.Redis):
-            self._redis.rpush(out_key, output)
-        return output
-    return invoker
-
-
-# Apply the decorator to the store method of Cache class
-Cache.store = count_calls(Cache.store)
+    """
+    Decorator to store history of inputs and outputs in Redis lists.
+    """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        inputs_key = "{}:inputs".format(method.__qualname__)
+        outputs_key = "{}:outputs".format(method.__qualname__)
+        
+        # Store inputs as string representation
+        self._redis.rpush(inputs_key, str(args))
+        
+        # Execute the original method
+        result = method(self, *args, **kwargs)
+        
+        # Store output as string representation
+        self._redis.rpush(outputs_key, str(result))
+        
+        return result
+    
+    return wrapper
