@@ -92,3 +92,7 @@ def call_history(method: Callable) -> Callable:
         return result
 
     return wrapper
+
+
+Cache.store = count_calls(Cache.store)
+Cache.store = call_history(Cache.store)
