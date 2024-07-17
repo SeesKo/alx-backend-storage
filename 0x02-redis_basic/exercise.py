@@ -57,22 +57,23 @@ class Cache:
         """
         return self.get(key, fn=int)
 
-    @staticmethod
-    def replay(method: Callable) -> None:
-        """
-        Display the history of calls for a particular method.
-        """
-        inputs_key = "{}:inputs".format(method.__qualname__)
-        outputs_key = "{}:outputs".format(method.__qualname__)
 
-        redis_instance = redis.Redis()
-        inputs = redis_instance.lrange(inputs_key, 0, -1)
-        outputs = redis_instance.lrange(outputs_key, 0, -1)
+def replay(cache_instance: Cache, method_name: str):
+    """
+    Display the history of calls for a particular method.
+    """
+    inputs_key = "{}:inputs".format(method_name)
+    outputs_key = "{}:outputs".format(method_name)
 
-        print(f"{method.__qualname__} was called {len(inputs)} times:")
-        for i in range(len(inputs)):
-            print(f"{method.__qualname__}{inputs[i].decode('utf-8')} -> "
-                  f"{outputs[i].decode('utf-8')}")
+    inputs = cache_instance._redis.lrange(inputs_key, 0, -1)
+    outputs = cache_instance._redis.lrange(outputs_key, 0, -1)
+
+    num_calls = len(inputs)
+
+    print(f"{method_name} was called {num_calls} times:")
+    for args_str, output_key in zip(inputs, outputs):
+        args = eval(args_str.decode())
+        print(f"{method_name}(*{args}) -> {output_key.decode()}")
 
 
 def count_calls(method: Callable) -> Callable:
